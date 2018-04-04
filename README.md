@@ -1,0 +1,2 @@
+# MineSweeperScala
+to practice scala
