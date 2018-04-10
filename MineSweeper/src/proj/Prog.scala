@@ -6,6 +6,8 @@ object Prog {
   def main(args: Array[String]) {
     println("OooooOOOOolooOO There goes tokyo go go godzilla!")
 
+
+
     val (rows, cols) = (7,7)
     //print a game board of minesweeper
     //probably going to want to move this to a method later
@@ -20,13 +22,9 @@ object Prog {
     //the 2d represents our board
     //0s are clear and 1s are mines
     val board = mineList(cols, rows)
-    for (i <- 0 to rows){
-      for (j <- 0 to cols){
-        print(board(i)(j))
-      }
-      println()
-    }
 
+    // print out board test
+    printBoard(board)
     //get user input on what coordinates they want to test
     print("Enter a 2d coordinate")
     var userInput = scala.io.StdIn.readLine()
@@ -54,4 +52,29 @@ object Prog {
     }
     return board
   }
+
+  def printBoard(visibleSquares:Array[Array[Int]]): Unit ={
+    printRows(visibleSquares)
+  }
+
+  def printRows(visibleSquares:Array[Array[Int]]): Unit ={
+    if (visibleSquares.length == 0) {
+      println()
+    } else {
+      printCols(visibleSquares(0))
+      printRows(visibleSquares.slice(1,visibleSquares.length))
+    }
+  }
+
+  def printCols(visibleSquares:Array[Int]): Unit ={
+    if(visibleSquares.length == 0) {
+      println()
+    } else {
+      print(visibleSquares(0) + " ")
+      printCols(visibleSquares.slice(1,visibleSquares.length))
+    }
+
+  }
+
+
 }
