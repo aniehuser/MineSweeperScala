@@ -8,11 +8,11 @@ object Prog {
 
 
 
-    val (rows, cols) = (7,7)
+    val (rows, cols) = (8,8)
     //print a game board of minesweeper
     //probably going to want to move this to a method later
-    for(i <- 0 to rows){
-      for(j <- 0 to cols){
+    for(i <- 0 to rows-1){
+      for(j <- 0 to cols-1){
         print('x')
       }
       println()
@@ -36,11 +36,11 @@ object Prog {
     //creates a 2 dimensional list to contain board
     //right now very weighted towards the early rows so might want to adjust that
     //also might not create 10 mines
-    val board = Array.ofDim[Int](rows+1, cols+1)
+    val board = Array.ofDim[Int](rows, cols)
     var count = 0
     var temp = 0
-    for(i <- 0 to rows) {
-      for (j <- 0 to cols) {
+    for(i <- 0 to rows-1) {
+      for (j <- 0 to cols-1) {
         temp = Random.nextInt(5)
         if(temp == 1 && count < 10) {
           count = count + 1
