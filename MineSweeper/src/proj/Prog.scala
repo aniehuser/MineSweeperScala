@@ -8,14 +8,7 @@ object Prog {
 
 
     val (rows, cols) = (8, 8)
-    //print a game board of minesweeper
-    //probably going to want to move this to a method later
-    for (i <- 0 to rows - 1) {
-      for (j <- 0 to cols - 1) {
-        print('x')
-      }
-      println()
-    }
+
 
     //print out the list containing mines
     //the 2d represents our board
@@ -71,7 +64,13 @@ object Prog {
     return board
   }
 
-  def printBoard(visibleSquares: Array[Array[Int]]): Unit = {
+
+//  def generateBoard(Array[(Int, Int)]) : Array[Array[Int]] = {
+//
+//  }
+
+  def printBoard(visibleSquares:Array[Array[Int]]): Unit ={
+
     printRows(visibleSquares)
   }
 
@@ -91,8 +90,6 @@ object Prog {
       print(visibleSquares(0) + " ")
       printCols(visibleSquares.slice(1, visibleSquares.length))
     }
-
   }
-
 
 }
