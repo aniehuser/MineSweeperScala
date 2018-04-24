@@ -8,24 +8,14 @@ object Prog {
     println("OooooOOOOolooOO There goes tokyo go go godzilla!")
 
 
-    val (rows, cols) = (8, 8)
+    val (rows, cols, numMines) = (10, 10, 10)
 
-
-    //print out the list containing mines
-    //the 2d represents our board
-    //0s are clear and 1s are mines
-//    val board = mineList(cols, rows)
-
-    // print out board test
-//    printBoard(board)
-
-
-    val mines = generateCords(10, rows, cols)
-    val visibleBoard = newVisibleBoard(10,10);
-    val board = newBoard(10,10,mines);
+    val mines = generateCords(numMines, rows, cols)
+    val visibleBoard = newVisibleBoard(rows,cols);
+    val board = newBoard(rows,cols,mines);
     printBoard(visibleBoard);
     printBoard(board);
-    for(i <- 0 to 9){
+    for(i <- 0 to numMines-1){
       println(mines(i))
     }
   }
@@ -58,12 +48,14 @@ object Prog {
     if(coords.length==0){
       return false;
     } else {
-      return isTupleEqual(check, coords.head) || doesCoordExist(coords.drop(1), check);
+      val temp = isTupleEqual(check, coords.head) || doesCoordExist(coords.drop(1), check);
+      return temp;
     }
   }
 
   def isTupleEqual(coord1:(Int,Int), coord2:(Int,Int)) : Boolean = {
-      return coord1._1 == coord2._1 && coord1._2 == coord2._2;
+    val temp = coord1._1 == coord2._1 && coord1._2 == coord2._2;
+    return temp;
   }
 
   def printBoard(visibleSquares:Array[Array[String]]): Unit ={
@@ -106,21 +98,34 @@ object Prog {
   }
 
   def newBoard(rows:Int, cols:Int, mines:Array[(Int,Int)]): Array[Array[String]] = {
-    if(rows == 0){
+    return newBoardHelper(rows-1,cols-1,mines);
+  }
+
+  def newBoardHelper(rows:Int, cols:Int, mines:Array[(Int,Int)]): Array[Array[String]] = {
+    if(rows < 0){
       return Array.ofDim[Array[String]](0)
     } else {
-      return newBoard(rows-1, cols, mines) :+ newRow(rows, cols, mines) ;
+      val temp1 = newBoardHelper(rows-1, cols, mines)
+      val temp2 = newRow(rows, cols, mines) ;
+      val temp = temp1 :+ temp2;
+      return temp;
     }
   }
 
   def newRow(rows: Int, cols:Int, mines:Array[(Int,Int)]): Array[String] = {
-    if(cols == 0){
+    if(cols < 0){
       return Array.ofDim[String](0);
     } else {
       if(doesCoordExist(mines, (rows,cols))) {
-        return  newRow(rows, cols - 1, mines) :+ "x";
+        val temp = newRow(rows, cols - 1, mines) :+ "x";
+        return temp;
       } else {
-        return  newRow(rows, cols-1, mines) :+ "0" //numAdjacentMines((rows,cols), mines).toString();
+        val emptyConverter = (in: Int) => {
+          if(in == 0) " " else in.toString();
+        }
+        val temp1 = emptyConverter(numAdjacentMines((rows,cols), mines));
+        val temp = newRow(rows, cols-1, mines) :+ temp1;
+        return temp;
       }
     }
   }
@@ -130,17 +135,14 @@ object Prog {
       return 0;
     } else{
       val adjacent = (coord1:(Int,Int), coord2:(Int,Int)) => {
-        if (isAdjacentCoord(coord1, coord2))
-          1;
-        else
-          0;
+        if (isAdjacentCoord(coord1, coord2)) 1 else 0
       }
       return numAdjacentMines(coord, mines.drop(1)) + adjacent(coord,mines.head);
     }
   }
 
   def isAdjacentCoord(first: (Int,Int), second: (Int,Int)): Boolean ={
-    return isDifferenceOneOrZero(first._1, second._1) && isDifferenceOneOrZero(first._1, second._2);
+    return  isDifferenceOneOrZero(first._1, second._1) && isDifferenceOneOrZero(first._2, second._2);
   }
 
   def isDifferenceOneOrZero(first: Int, second: Int) : Boolean = {
