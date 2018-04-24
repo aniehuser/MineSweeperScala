@@ -13,8 +13,14 @@ object Prog {
     val mines = generateCords(numMines, rows, cols)
     val visibleBoard = newVisibleBoard(rows,cols);
     val board = newBoard(rows,cols,mines);
-    printBoard(visibleBoard);
+
     printBoard(board);
+
+    revealCoord((1,1), visibleBoard, board);
+    printBoard(visibleBoard);
+
+
+
     for(i <- 0 to numMines-1){
       println(mines(i))
     }
@@ -149,5 +155,38 @@ object Prog {
     return Math.abs(first-second) == 1 || first-second == 0;
   }
 
+  def revealCoord(coord: (Int,Int), visible: Array[Array[String]], board:Array[Array[String]]) : Boolean = {
+    if(visible(coord._1)(coord._2) != "0"){
+      return false;
+    }
+    if(board(coord._1)(coord._2) != " "){
+      visible(coord._1)(coord._2) = board(coord._1)(coord._2);
+    } else {
+      revealBlanks(coord, visible, board);
+    }
+
+    return true;
+  }
+
+  def revealBlanks(coord: (Int,Int), visible: Array[Array[String]], board:Array[Array[String]]): Unit = {
+    if(coord._1 < 0 || coord._2 < 0 || coord._1 >= visible.length || coord._2 >= visible(0).length){
+      return;
+    }
+    if (visible(coord._1)(coord._2) != "0") {
+      return;
+    }
+    visible(coord._1)(coord._2) = board(coord._1)(coord._2);
+    if(board(coord._1)(coord._2) != " "){
+      return;
+    }
+    revealBlanks((coord._1+1, coord._2+1),visible, board);
+    revealBlanks((coord._1+1, coord._2  ),visible, board);
+    revealBlanks((coord._1+1, coord._2-1),visible, board);
+    revealBlanks((coord._1-1, coord._2+1),visible, board);
+    revealBlanks((coord._1-1, coord._2  ),visible, board);
+    revealBlanks((coord._1-1, coord._2-1),visible, board);
+    revealBlanks((coord._1,   coord._2+1),visible, board);
+    revealBlanks((coord._1,   coord._2-1),visible, board);
+  }
 
 }
