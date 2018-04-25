@@ -8,45 +8,95 @@ object Prog {
   def main(args: Array[String]) {
     println("OooooOOOOolooOO There goes tokyo go go godzilla!")
 
-    val (rows, cols, numMines) = (10, 10, 10)
+    val (rows, cols, numMines) = (5,5,4)
     executeGame(rows, cols, numMines);
 
   }
 
-  def executeGame(rows: Int, cols: Int, mines: Int): Unit = {
+  def executeGame(rows: Int, cols: Int, numMines: Int): Unit = {
     val visibleBoard = newVisibleBoard(rows, cols);
-    val board = newBoard(rows, cols, mines);
-    gameLoop(rows, cols, 0, visibleBoard, board);
+    val board = newBoard(rows, cols, numMines);
+    if(gameLoop(rows, cols, numMines, visibleBoard, board)){
+      printBoard(board, 0);
+      println("you win");
+    } else {
+      printBoard(visibleBoard, 0);
+      println("you lose");
+    }
 
   }
 
-  def gameLoop(rows: Int, cols: Int, flags: Int, visible: Array[Array[String]], board: Array[Array[String]]): Boolean = {
-    printBoard(visible);
-    val input = userInput(rows, cols, visible);
-    val hit = revealCoord(input, visible, board);
+  def gameLoop(rows: Int, cols: Int, flags:Int, visible: Array[Array[String]], board: Array[Array[String]]): Boolean = {
+    printBoard(visible, flags);
+    if(checkWinCondition(visible,board)){
+      return true;
+    }
+
+
+    val flag = chooseFlag();
+    val input = userCoordInput(rows,cols,flag,visible);
+    val hit = revealCoord(input, visible, board, flag);
     if (hit == "x") {
       return false;
     }
-    gameLoop(rows, cols, flags, visible, board);
+    if(flag){
+      if(hit == "F"){
+        return gameLoop(rows,cols,flags-1,visible,board);
+      } else {
+        return gameLoop(rows,cols,flags+1,visible,board);
+      }
+    } else {
+      return gameLoop(rows, cols, flags, visible, board);
+    }
+  }
+
+  def checkWinCondition(visible:Array[Array[String]], board:Array[Array[String]]): Boolean = {
+    if(visible.length==0){
+      return true;
+    } else {
+      val inRow = checkWinConditionCols(visible(0), board(0));
+      return inRow && checkWinCondition(visible.drop(1), board.drop(1))
+    }
+
 
   }
 
-  def userInput(rows: Int, cols: Int, visible: Array[Array[String]]): (Int, Int) = {
+  def checkWinConditionCols(visible:Array[String], board:Array[String]): Boolean = {
+    if(visible.length==0){
+      return true;
+    } else {
+      if(visible(0) == "0" && board(0) != "x"){
+        return false;
+      } else{
+        return true && checkWinConditionCols(visible.drop(1), board.drop(1));
+      }
+    }
+  }
+
+  def chooseFlag() : Boolean = {
+    println("Type f to place a flag")
+    val input = scala.io.StdIn.readLine();
+    return input.matches("[fF([fF][lL][aA][gG])]");
+  }
+
+  def userCoordInput(rows: Int, cols: Int, flag:Boolean, visible: Array[Array[String]]): (Int, Int) = {
     print("Enter Row: ");
     val row = isInputInt(scala.io.StdIn.readLine(), "Enter Row: ");
     print("Enter Column: ");
     val col = isInputInt(scala.io.StdIn.readLine(), "Enter Column: ");
 
-    if (isInvalidCoord((row, col), rows, cols, visible)) {
+    if (isInvalidCoord((row, col), rows, cols,flag, visible)) {
       println("Invalid Coordinate.");
-      return userInput(rows, cols, visible);
+      return userCoordInput(rows, cols, flag, visible);
     }
     return (row, col);
 
   }
 
-  def isInvalidCoord(coord: (Int, Int), rows: Int, cols: Int, visible: Array[Array[String]]): Boolean = {
-    return coord._1 >= rows || coord._1 < 0 || coord._2 >= cols || coord._2 < 0 || visible(coord._1)(coord._2) != "0";
+  def isInvalidCoord(coord: (Int, Int), rows: Int, cols: Int, flag:Boolean, visible: Array[Array[String]]): Boolean = {
+    return coord._1 >= rows || coord._1 < 0 || coord._2 >= cols || coord._2 < 0 ||
+      (flag && visible(coord._1)(coord._2) != "F" && visible(coord._1)(coord._2) != "0") ||
+      (!flag && visible(coord._1)(coord._2) != "0");
   }
 
   def isInputInt(input: String, message: String): Int = {
@@ -98,20 +148,21 @@ object Prog {
     return temp;
   }
 
-  def printBoard(visibleSquares: Array[Array[String]]): Unit = {
-    printHeader(visibleSquares(0).length);
+  def printBoard(visibleSquares: Array[Array[String]], flags:Int): Unit = {
+    printHeader(visibleSquares(0).length, flags);
     printTopBotBound(visibleSquares(0).length);
     printRows(visibleSquares, 0);
     printTopBotBound(visibleSquares(0).length);
   }
 
-  def printHeader(cols: Int): Unit = {
-    println("    " + getHeader(cols));
+  def printHeader(cols: Int, flags:Int): Unit = {
+    println("    " + getHeader(cols) + "     Flags Left: " + flags);
   }
 
   def printTopBotBound(cols: Int): Unit = {
     println("" + getTopBotBound(cols));
   }
+
   def getTopBotBound(cols: Int): String = {
     if(cols==0){
       return "  ---"
@@ -126,6 +177,7 @@ object Prog {
     val temp = getHeader(cols - 1) + " " + (cols-1).toString;
     return temp;
   }
+
   def printRows(visibleSquares: Array[Array[String]], curr: Int): Unit = {
     if (visibleSquares.length == 0) {
       return;
@@ -163,7 +215,7 @@ object Prog {
   }
 
   def newBoard(rows:Int, cols:Int, numMines:Int): Array[Array[String]] = {
-    val mines = generateCords(rows, cols, numMines);
+    val mines = generateCords(numMines,rows,cols);
     return newBoardHelper(rows-1,cols-1,mines);
   }
 
@@ -215,8 +267,14 @@ object Prog {
     return Math.abs(first-second) == 1 || first-second == 0;
   }
 
-  def revealCoord(coord: (Int,Int), visible: Array[Array[String]], board:Array[Array[String]]) : String = {
-    if(board(coord._1)(coord._2) != " "){
+  def revealCoord(coord: (Int,Int), visible: Array[Array[String]], board:Array[Array[String]],flag:Boolean) : String = {
+    if(flag) {
+      if (visible(coord._1)(coord._2) == "F") {
+        visible(coord._1)(coord._2) = "0"
+      } else {
+        visible(coord._1)(coord._2) = "F"
+      }
+    } else if(board(coord._1)(coord._2) != " "){
       visible(coord._1)(coord._2) = board(coord._1)(coord._2);
     } else {
       revealBlanks(coord, visible, board);
