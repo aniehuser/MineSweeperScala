@@ -1,48 +1,82 @@
 package proj
 
-import scala.util.Random
-import scala.math
+import scala.util.Random;
+import scala.math;
+import scala.util.matching.Regex;
 
 object Prog {
   def main(args: Array[String]) {
     println("OooooOOOOolooOO There goes tokyo go go godzilla!")
 
-
     val (rows, cols, numMines) = (10, 10, 10)
+    executeGame(rows, cols, numMines);
 
-    val mines = generateCords(numMines, rows, cols)
-    val visibleBoard = newVisibleBoard(rows,cols);
-    val board = newBoard(rows,cols,mines);
+  }
 
-    printBoard(board);
+  def executeGame(rows: Int, cols: Int, mines: Int): Unit = {
+    val visibleBoard = newVisibleBoard(rows, cols);
+    val board = newBoard(rows, cols, mines);
+    gameLoop(rows, cols, 0, visibleBoard, board);
 
-    revealCoord((1,1), visibleBoard, board);
-    printBoard(visibleBoard);
+  }
 
+  def gameLoop(rows: Int, cols: Int, flags: Int, visible: Array[Array[String]], board: Array[Array[String]]): Boolean = {
+    printBoard(visible);
+    val input = userInput(rows, cols, visible);
+    val hit = revealCoord(input, visible, board);
+    if (hit == "x") {
+      return false;
+    }
+    gameLoop(rows, cols, flags, visible, board);
 
+  }
 
-    for(i <- 0 to numMines-1){
-      println(mines(i))
+  def userInput(rows: Int, cols: Int, visible: Array[Array[String]]): (Int, Int) = {
+    print("Enter Row: ");
+    val row = isInputInt(scala.io.StdIn.readLine(), "Enter Row: ");
+    print("Enter Column: ");
+    val col = isInputInt(scala.io.StdIn.readLine(), "Enter Column: ");
+
+    if (isInvalidCoord((row, col), rows, cols, visible)) {
+      println("Invalid Coordinate.");
+      return userInput(rows, cols, visible);
+    }
+    return (row, col);
+
+  }
+
+  def isInvalidCoord(coord: (Int, Int), rows: Int, cols: Int, visible: Array[Array[String]]): Boolean = {
+    return coord._1 >= rows || coord._1 < 0 || coord._2 >= cols || coord._2 < 0 || visible(coord._1)(coord._2) != "0";
+  }
+
+  def isInputInt(input: String, message: String): Int = {
+    if (input.matches("\\d+")) {
+      return input.toInt;
+    } else {
+      println("Invalid.");
+      print(message);
+      return isInputInt(scala.io.StdIn.readLine(), message);
     }
   }
-  def generateCords(amountOfMines:Int, rows:Int, cols:Int): Array[(Int, Int)]  ={
+
+  def generateCords(amountOfMines: Int, rows: Int, cols: Int): Array[(Int, Int)] = {
     return generateCordsHelper(rows, cols, amountOfMines)
   }
-  def generateCordsHelper(rows:Int, cols:Int, amountOfMines:Int): Array[(Int, Int)] ={
-    //TODO:check to make sure coord is unique
-    if(amountOfMines == 0){
-      return Array.ofDim[(Int,Int)](0);
-    }
-    else{
-      val coords = generateCordsHelper(rows,cols,amountOfMines-1);
-      return generateSingleCoord(rows, cols, coords) +: coords;
 
+  def generateCordsHelper(rows: Int, cols: Int, amountOfMines: Int): Array[(Int, Int)] = {
+    //TODO:check to make sure coord is unique
+    if (amountOfMines == 0) {
+      return Array.ofDim[(Int, Int)](0);
+    }
+    else {
+      val coords = generateCordsHelper(rows, cols, amountOfMines - 1);
+      return generateSingleCoord(rows, cols, coords) +: coords;
     }
   }
 
-  def generateSingleCoord(rows:Int, cols:Int, coords:Array[(Int,Int)]): (Int, Int) = {
+  def generateSingleCoord(rows: Int, cols: Int, coords: Array[(Int, Int)]): (Int, Int) = {
     val newCoord = (Random.nextInt(rows), Random.nextInt(cols));
-    if(doesCoordExist(coords, newCoord)) {
+    if (doesCoordExist(coords, newCoord)) {
       return generateSingleCoord(rows, cols, coords);
     }
     else {
@@ -50,8 +84,8 @@ object Prog {
     }
   }
 
-  def doesCoordExist(coords:Array[(Int, Int)], check:(Int,Int)) : Boolean = {
-    if(coords.length==0){
+  def doesCoordExist(coords: Array[(Int, Int)], check: (Int, Int)): Boolean = {
+    if (coords.length == 0) {
       return false;
     } else {
       val temp = isTupleEqual(check, coords.head) || doesCoordExist(coords.drop(1), check);
@@ -59,30 +93,55 @@ object Prog {
     }
   }
 
-  def isTupleEqual(coord1:(Int,Int), coord2:(Int,Int)) : Boolean = {
+  def isTupleEqual(coord1: (Int, Int), coord2: (Int, Int)): Boolean = {
     val temp = coord1._1 == coord2._1 && coord1._2 == coord2._2;
     return temp;
   }
 
-  def printBoard(visibleSquares:Array[Array[String]]): Unit ={
-    printRows(visibleSquares)
+  def printBoard(visibleSquares: Array[Array[String]]): Unit = {
+    printHeader(visibleSquares(0).length);
+    printTopBotBound(visibleSquares(0).length);
+    printRows(visibleSquares, 0);
+    printTopBotBound(visibleSquares(0).length);
   }
 
-  def printRows(visibleSquares: Array[Array[String]]): Unit = {
+  def printHeader(cols: Int): Unit = {
+    println("    " + getHeader(cols));
+  }
+
+  def printTopBotBound(cols: Int): Unit = {
+    println("" + getTopBotBound(cols));
+  }
+  def getTopBotBound(cols: Int): String = {
+    if(cols==0){
+      return "  ---"
+    }
+    return getTopBotBound(cols-1) + "--"
+  }
+
+  def getHeader(cols: Int): String = {
+    if (cols <= 1) {
+      return (cols-1).toString;
+    }
+    val temp = getHeader(cols - 1) + " " + (cols-1).toString;
+    return temp;
+  }
+  def printRows(visibleSquares: Array[Array[String]], curr: Int): Unit = {
     if (visibleSquares.length == 0) {
-      println()
+      return;
     } else {
+      print(curr + " | ")
       printCols(visibleSquares(0))
-      printRows(visibleSquares.slice(1, visibleSquares.length))
+      printRows(visibleSquares.drop(1),curr+1)
     }
   }
 
   def printCols(visibleSquares: Array[String]): Unit = {
     if (visibleSquares.length == 0) {
-      println()
+      println("|")
     } else {
       print(visibleSquares(0) + " ")
-      printCols(visibleSquares.slice(1, visibleSquares.length))
+      printCols(visibleSquares.drop(1))
     }
   }
 
@@ -103,7 +162,8 @@ object Prog {
     }
   }
 
-  def newBoard(rows:Int, cols:Int, mines:Array[(Int,Int)]): Array[Array[String]] = {
+  def newBoard(rows:Int, cols:Int, numMines:Int): Array[Array[String]] = {
+    val mines = generateCords(rows, cols, numMines);
     return newBoardHelper(rows-1,cols-1,mines);
   }
 
@@ -155,17 +215,13 @@ object Prog {
     return Math.abs(first-second) == 1 || first-second == 0;
   }
 
-  def revealCoord(coord: (Int,Int), visible: Array[Array[String]], board:Array[Array[String]]) : Boolean = {
-    if(visible(coord._1)(coord._2) != "0"){
-      return false;
-    }
+  def revealCoord(coord: (Int,Int), visible: Array[Array[String]], board:Array[Array[String]]) : String = {
     if(board(coord._1)(coord._2) != " "){
       visible(coord._1)(coord._2) = board(coord._1)(coord._2);
     } else {
       revealBlanks(coord, visible, board);
     }
-
-    return true;
+    return visible(coord._1)(coord._2);
   }
 
   def revealBlanks(coord: (Int,Int), visible: Array[Array[String]], board:Array[Array[String]]): Unit = {
